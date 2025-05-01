@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Синхронизация файлов</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        #results {
+            opacity: 0;
+            height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        #results.show {
+            opacity: 1;
+            height: auto;
+            padding: 20px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+        }
+
+        .spinner-border {
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h1 class="mb-4">Синхронизация файлов</h1>
+
+    <button id="sync-button" class="btn btn-primary">
+        Запустить синхронизацию
+    </button>
+
+    <div id="results" class="mt-4">
+        <h2 class="mb-4">Результаты синхронизации</h2>
+
+        <div id="uploaded-result" class="mb-4">
+            <h3>Загружено: <span class="count">0</span></h3>
+            <ul class="list-group mt-2 names-list"></ul>
+        </div>
+
+        <div id="updated-result" class="mb-4">
+            <h3>Обновлено: <span class="count">0</span></h3>
+            <ul class="list-group mt-2 names-list"></ul>
+        </div>
+
+        <div id="deleted-result" class="mb-4">
+            <h3>Удалено: <span class="count">0</span></h3>
+            <ul class="list-group mt-2 names-list"></ul>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('sync-button').addEventListener('click', async () => {
+            const button = document.getElementById('sync-button');
+            const resultsDiv = document.getElementById('results');
+
+            try {
+                // Показываем индикатор загрузки
+                button.disabled = true;
+                button.innerHTML = `
+                    <span class="spinner-border spinner-border-sm"></span>
+                    Синхронизация...
+                `;
+
+                // Отправляем запрос
+                const response = await fetch('/sync');
+
+                if (!response.ok) {
+                    throw new Error(`Ошибка сервера: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                // Обновляем результаты
+                updateResult('uploaded', data.uploaded);
+                updateResult('updated', data.updated);
+                updateResult('deleted', data.deleted);
+
+                // Показываем блок с результатами
+                resultsDiv.classList.add('show');
+
+            } catch (error) {
+                console.error('Ошибка:', error);
+                alert('Ошибка синхронизации: ' + error.message);
+            } finally {
+                // Восстанавливаем кнопку
+                button.disabled = false;
+                button.textContent = 'Запустить синхронизацию';
+            }
+        });
+
+        function updateResult(type, data) {
+            const container = document.getElementById(`${type}-result`);
+
+            // Обновляем счетчик
+            container.querySelector('.count').textContent = data.count;
+
+            // Обновляем список файлов
+            const list = container.querySelector('.names-list');
+            list.innerHTML = '';
+
+            if (data.names.length > 0) {
+                data.names.forEach(name => {
+                    const item = document.createElement('li');
+                    item.className = 'list-group-item';
+                    item.textContent = name;
+                    list.appendChild(item);
+                });
+            } else {
+                const item = document.createElement('li');
+                item.className = 'list-group-item text-muted';
+                item.textContent = 'Нет изменений';
+                list.appendChild(item);
+            }
+        }
+    </script>
+</body>
+</html>
