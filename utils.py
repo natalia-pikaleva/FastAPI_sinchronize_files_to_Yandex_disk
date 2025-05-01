@@ -1,23 +1,23 @@
-from concurrent.futures import ThreadPoolExecutor
 from dotenv import load_dotenv
+from fastapi import Path
 from functools import lru_cache
 import hashlib
 import multiprocessing
 from multiprocessing import Manager
 import os
 from os import getenv
+from pathlib import Path
 import tempfile
 import yadisk
+from yadisk import YaDisk
 
+# Загружаем данные из .env
 load_dotenv()
 
-DIRECTORY_PATH = getenv(
-    "DIRECTORY_PATH",
-)
+# Для локального запуска и Docker
+DIRECTORY_PATH = Path(os.getenv("DIRECTORY_PATH"))
+CLOUD_DIRECTORY = os.getenv("CLOUD_DIRECTORY")
 
-CLOUD_DIRECTORY = getenv(
-    "CLOUD_DIRECTORY",
-)
 TOKEN = getenv(
     "TOKEN",
 )
@@ -25,7 +25,7 @@ TOKEN = getenv(
 y = yadisk.YaDisk(token=TOKEN)
 
 
-def get_local_hash(file_path):
+def get_local_hash(file_path: Path) -> str:
     """Вычисление SHA-256 хеша локального файла"""
     sha256 = hashlib.sha256()
     with open(file_path, 'rb') as f:
@@ -35,11 +35,12 @@ def get_local_hash(file_path):
 
 
 @lru_cache(maxsize=1000)
-def get_local_hash_cached(file_path):
+def get_local_hash_cached(file_path: Path) -> str:
+    """Кэширование хэша локального файла"""
     return get_local_hash(file_path)
 
 
-def get_remote_hash(y, remote_path):
+def get_remote_hash(y: YaDisk, remote_path: Path) -> str:
     """Получение хеша файла на Яндекс.Диске"""
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_file = os.path.join(temp_dir, "temp_file")
@@ -47,7 +48,8 @@ def get_remote_hash(y, remote_path):
         return get_local_hash(temp_file)
 
 
-def upload_and_update(filename, cloud_names, results):
+def upload_and_update(filename: str, cloud_names: set, results: dict) -> str:
+    """Загрузка нового файла на Яндекс.диск или обновление существующего"""
     try:
         local_file = f"{DIRECTORY_PATH}/{filename}"
         remote_file = f"{CLOUD_DIRECTORY}/{filename}"
@@ -71,7 +73,9 @@ def upload_and_update(filename, cloud_names, results):
         print(f"Ошибка обработки {filename}: {str(e)}")
         return "error"
 
-def upload_and_update_file_with_processpool(filenames_list, cloud_names):
+
+def upload_and_update_file_with_processpool(filenames_list: list[str], cloud_names: set) -> dict:
+    """Загрузка и обновление файлов с использованием мультипроцессов"""
     manager = Manager()
     results = manager.dict({
         "uploaded": {"count": 0, "names": manager.list()},
