@@ -1,0 +1,28 @@
+services:
+  web:
+    build: .
+    environment:
+      - DIRECTORY_PATH=${DIRECTORY_PATH}  # Берет из .env или переопределяет
+      - CLOUD_DIRECTORY
+    volumes:
+      - ${DEV_DIRECTORY_PATH}:${DIRECTORY_PATH}  # Монтирование для Docker
+    ports:
+      - "8000:8000"
+    networks:
+      - my_network
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./static:/app/static
+    depends_on:
+      - web
+    networks:
+      - my_network
+
+networks:
+  my_network:
+    driver: bridge
