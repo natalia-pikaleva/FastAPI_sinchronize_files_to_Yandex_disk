@@ -30,7 +30,9 @@ templates = Jinja2Templates(directory="static")
 
 @app.get("/", response_class=HTMLResponse)
 def read_root() -> FileResponse:
-    """При переходе по ссылке в браузере направляем пользователю шаблон index.html"""
+    """
+    При переходе по ссылке в браузере направляем пользователю шаблон index.html
+    """
     return FileResponse(
         "/app/static/index.html",
         media_type="text/html",
