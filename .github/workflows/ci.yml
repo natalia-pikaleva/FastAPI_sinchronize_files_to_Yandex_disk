@@ -27,7 +27,7 @@ jobs:
 
       - name: Set up Docker Compose
         run: |
-          docker-compose up -d
+          docker compose up -d
 
       - name: Wait for app to be ready
         run: |
@@ -48,4 +48,4 @@ jobs:
           pytest tests/
 
       - name: Shutdown Docker Compose
-        run: docker-compose down
+        run: docker compose down
