@@ -1,0 +1,10 @@
+import pytest
+from fastapi.testclient import TestClient
+from main import app
+
+client = TextClient(app)
+
+def test_read_main():
+    response = client.get('/sync')
+    assert response.status_code == 200
+    assert "uploaded" in response.json()
