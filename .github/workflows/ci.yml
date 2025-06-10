@@ -25,15 +25,21 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up Docker Compose
+      - name: Create .env file
         run: |
-          docker compose up -d
+          echo "TOKEN=${{ secrets.TOKEN }}" >> .env
+          echo "DEV_DIRECTORY_PATH=${{ secrets.DEV_DIRECTORY_PATH }}" >> .env
+          echo "DIRECTORY_PATH=${{ secrets.DIRECTORY_PATH }}" >> .env
+          echo "CLOUD_DIRECTORY=${{ secrets.CLOUD_DIRECTORY }}" >> .env
 
+      - name: Start Docker Compose
+        run: docker compose up -d
+        
       - name: Wait for app to be ready
         run: |
           # Пример простой проверки доступности приложения
           for i in {1..10}; do
-            if curl -s http://localhost:8000/health; then
+            if curl -s http://localhost:8000/sync; then
               echo "App is up"
               break
             fi
