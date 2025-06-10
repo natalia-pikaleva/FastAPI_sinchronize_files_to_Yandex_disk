@@ -34,7 +34,7 @@ jobs:
 
       - name: Start Docker Compose
         run: docker compose up -d
-        
+
       - name: Wait for app to be ready
         run: |
           # Пример простой проверки доступности приложения
@@ -46,6 +46,9 @@ jobs:
             echo "Waiting for app..."
             sleep 3
           done
+
+      - name: List files before tests
+        run: ls -l tests/
 
       - name: Run tests
         run: |
